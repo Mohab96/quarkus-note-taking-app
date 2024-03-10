@@ -84,8 +84,9 @@ public class NoteEndpoints {
     @GET
     @Path("/{id}/tags")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response listTags() {
-        List<Tag> tags = Tag.listAll();
+    public Response listTags(@PathParam("id") UUID note_id) {
+        Note note = Note.findById(note_id);
+        List<Tag> tags = note.tagsList;
         return Response.ok(tags).build();
     }
 
@@ -98,6 +99,8 @@ public class NoteEndpoints {
 
         if (note == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
+        } else if (note.tagsList.contains(tag)) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Tag already exists").build();
         }
 
         note.tagsList.add(tag);
@@ -117,6 +120,12 @@ public class NoteEndpoints {
     public Response removeTag(@PathParam("id") UUID id, @PathParam("tagId") UUID tagId) {
         Note note = Note.findById(id);
         Tag tag = Tag.findById(tagId);
+
+        if (note == null || tag == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        } else if (!note.tagsList.contains(tag)) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Tag does not exist").build();
+        }
 
         note.tagsList.remove(tag);
         note.persist();
