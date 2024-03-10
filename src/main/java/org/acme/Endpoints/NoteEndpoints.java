@@ -25,6 +25,10 @@ public class NoteEndpoints {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createNote(Note note) {
+        if (note == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Note cannot be null").build();
+        }
+
         note.persist();
 
         if (note.isPersistent()) {
