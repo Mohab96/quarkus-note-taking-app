@@ -22,6 +22,12 @@ public class Note extends PanacheEntityBase {
     @NotBlank(message = "Note's body cannot be blank")
     public String body;
 
-    @ManyToMany(mappedBy = "notesList")
+//    @ManyToMany(mappedBy = "notesList")
+//    public List<Tag> tagsList = new ArrayList<>();
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "note_tag",
+            joinColumns = @JoinColumn(name = "note_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
     public List<Tag> tagsList = new ArrayList<>();
 }

@@ -18,6 +18,9 @@ public class Tag extends PanacheEntityBase {
     @NotBlank(message = "Tag's title cannot be blank")
     public String title;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REFRESH})
-    List<Note> notesList = new ArrayList<>();
+//    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REFRESH})
+//    List<Note> notesList = new ArrayList<>();
+
+    @ManyToMany(mappedBy = "tagsList", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    public List<Note> notesList = new ArrayList<>();
 }

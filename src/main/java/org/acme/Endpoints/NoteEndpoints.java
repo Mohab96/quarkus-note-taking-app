@@ -1,18 +1,27 @@
 package org.acme.Endpoints;
 
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.acme.Entities.Note;
 import org.acme.Entities.Tag;
+import org.acme.Utils.ErrorResponse;
 
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Path("/api/notes")
 public class NoteEndpoints {
+    @Inject
+    Validator validator;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllNotes() {
@@ -27,10 +36,24 @@ public class NoteEndpoints {
     public Response createNote(Note note) {
         if (note == null) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Note cannot be null").build();
-        } else if (note.title == null || note.title.isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Title cannot be null or empty").build();
-        } else if (note.body == null || note.body.isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Body cannot be null or empty").build();
+        }
+
+//        else if (note.title == null || note.title.isEmpty()) {
+//            return Response.status(Response.Status.BAD_REQUEST).entity("Title cannot be null or empty").build();
+//        } else if (note.body == null || note.body.isEmpty()) {
+//            return Response.status(Response.Status.BAD_REQUEST).entity("Body cannot be null or empty").build();
+//        }
+
+        Set<ConstraintViolation<Note>> noteViolations = validator.validate(note);
+
+        // this line of code is converting a Set of ConstraintViolation<Note> objects into a Set of ConstraintViolation<?> objects
+        Set<ConstraintViolation<?>> violations = new HashSet<>(noteViolations);
+
+        if (!violations.isEmpty()) {
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(violations))
+                    .build();
         }
 
         note.persist();
@@ -87,8 +110,22 @@ public class NoteEndpoints {
     public Response updateNote(@PathParam("id") UUID id, Note note) {
         if (id == null) {
             return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be null").build();
-        } else if (id.toString().isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be empty").build();
+        }
+
+//        else if (id.toString().isEmpty()) {
+//            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be empty").build();
+//        }
+
+        Set<ConstraintViolation<Note>> noteViolations = validator.validate(note);
+
+        // this line of code is converting a Set of ConstraintViolation<Note> objects into a Set of ConstraintViolation<?> objects
+        Set<ConstraintViolation<?>> violations = new HashSet<>(noteViolations);
+
+        if (!violations.isEmpty()) {
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(violations))
+                    .build();
         }
 
         Note noteToUpdate = Note.findById(id);
@@ -132,16 +169,14 @@ public class NoteEndpoints {
     }
 
     @POST
-    @Path("/{id}/tags")
+    @Path("/{id}/tags/{tagId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response addTag(@PathParam("id") UUID id, UUID tagId) {
+    public Response addTag(@PathParam("id") UUID id, @PathParam("tagId") UUID tagId) {
         System.out.println(id);
         System.out.println(tagId);
 
         if (id == null || tagId == null) {
-            System.out.println("ID or tagID cannot be null");
-
             return Response.status(Response.Status.BAD_REQUEST).build();
         } else if (id.toString().isEmpty()) {
             return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be empty").build();
