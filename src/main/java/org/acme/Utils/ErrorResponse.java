@@ -21,12 +21,4 @@ public class ErrorResponse {
             this.errors.add(new GenericValidationError(violation.getPropertyPath().toString(), violation.getMessage()));
         }
     }
-
-    public int getErrorCount() {
-        return this.errors.size();
-    }
-
-    public void addError(String path, String message) {
-        this.errors.add(new GenericValidationError(path, message));
-    }
 }
