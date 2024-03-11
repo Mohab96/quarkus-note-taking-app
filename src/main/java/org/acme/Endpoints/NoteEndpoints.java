@@ -173,9 +173,6 @@ public class NoteEndpoints {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addTag(@PathParam("id") UUID id, @PathParam("tagId") UUID tagId) {
-        System.out.println(id);
-        System.out.println(tagId);
-
         if (id == null || tagId == null) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         } else if (id.toString().isEmpty()) {
@@ -193,7 +190,6 @@ public class NoteEndpoints {
 
         note.tagsList.add(tag);
         note.persist();
-        tag.persist();
 
         if (note.isPersistent() && tag.isPersistent()) {
             return Response.created(URI.create("/api/notes/" + note.id + "/tags/" + tag.id)).entity(note).build();
