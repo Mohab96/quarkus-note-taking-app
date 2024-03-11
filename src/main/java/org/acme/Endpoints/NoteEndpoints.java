@@ -27,21 +27,31 @@ public class NoteEndpoints {
     public Response createNote(Note note) {
         if (note == null) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Note cannot be null").build();
+        } else if (note.title == null || note.title.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Title cannot be null or empty").build();
+        } else if (note.body == null || note.body.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Body cannot be null or empty").build();
         }
 
         note.persist();
 
         if (note.isPersistent()) {
-            return Response.created(URI.create("/api/notes" + note.id)).build();
+            return Response.created(URI.create("/api/notes" + note.id)).entity(note).build();
         }
 
-        return Response.status(Response.Status.BAD_REQUEST).entity(note).build();
+        return Response.status(Response.Status.BAD_REQUEST).build();
     }
 
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getNoteById(@PathParam("id") UUID id) {
+        if (id == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be null").build();
+        } else if (id.toString().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be empty").build();
+        }
+
         Note note = Note.findById(id);
 
         if (note == null) {
@@ -55,6 +65,12 @@ public class NoteEndpoints {
     @Transactional
     @Path("/{id}")
     public Response deleteNote(@PathParam("id") UUID id) {
+        if (id == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be null").build();
+        } else if (id.toString().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be empty").build();
+        }
+
         Note note = Note.findById(id);
         if (note == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
@@ -69,23 +85,48 @@ public class NoteEndpoints {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateNote(@PathParam("id") UUID id, Note note) {
+        if (id == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be null").build();
+        } else if (id.toString().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be empty").build();
+        }
+
         Note noteToUpdate = Note.findById(id);
+
         if (noteToUpdate == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        noteToUpdate.title = note.title;
-        noteToUpdate.body = note.body;
+        if (note.title != null && !note.title.isEmpty())
+            noteToUpdate.title = note.title;
+
+        if (note.body != null && !note.body.isEmpty())
+            noteToUpdate.body = note.body;
+
         noteToUpdate.persist();
 
-        return Response.ok(noteToUpdate).build();
+        if (noteToUpdate.isPersistent())
+            return Response.ok(noteToUpdate).build();
+
+        return Response.status(Response.Status.BAD_REQUEST).build();
     }
 
     @GET
-    @Path("/{id}/tags")
+    @Path("/{id}/tags/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listTags(@PathParam("id") UUID note_id) {
+        if (note_id == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be null").build();
+        } else if (note_id.toString().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be empty").build();
+        }
+
         Note note = Note.findById(note_id);
+
+        if (note == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
         List<Tag> tags = note.tagsList;
         return Response.ok(tags).build();
     }
@@ -94,10 +135,22 @@ public class NoteEndpoints {
     @Path("/{id}/tags")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response addTag(@PathParam("id") UUID id, Tag tag) {
-        Note note = Note.findById(id);
+    public Response addTag(@PathParam("id") UUID id, UUID tagId) {
+        System.out.println(id);
+        System.out.println(tagId);
 
-        if (note == null) {
+        if (id == null || tagId == null) {
+            System.out.println("ID or tagID cannot be null");
+
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        } else if (id.toString().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be empty").build();
+        }
+
+        Note note = Note.findById(id);
+        Tag tag = Tag.findById(tagId);
+
+        if (note == null || tag == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         } else if (note.tagsList.contains(tag)) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Tag already exists").build();
@@ -105,12 +158,13 @@ public class NoteEndpoints {
 
         note.tagsList.add(tag);
         note.persist();
+        tag.persist();
 
-        if (note.isPersistent()) {
-            return Response.created(URI.create("/api/notes/" + note.id + "/tags/" + tag.id)).build();
+        if (note.isPersistent() && tag.isPersistent()) {
+            return Response.created(URI.create("/api/notes/" + note.id + "/tags/" + tag.id)).entity(note).build();
         }
 
-        return Response.status(Response.Status.BAD_REQUEST).entity(note).build();
+        return Response.status(Response.Status.BAD_REQUEST).build();
     }
 
     @DELETE
@@ -134,6 +188,6 @@ public class NoteEndpoints {
             return Response.noContent().build();
         }
 
-        return Response.status(Response.Status.BAD_REQUEST).entity(note).build();
+        return Response.status(Response.Status.BAD_REQUEST).build();
     }
 }

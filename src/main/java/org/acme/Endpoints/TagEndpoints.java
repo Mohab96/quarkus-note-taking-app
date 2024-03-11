@@ -24,19 +24,31 @@ public class TagEndpoints {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createTag(Tag tag) {
+        if (tag == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Tag cannot be null").build();
+        } else if (tag.title == null || tag.title.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Title cannot be null or empty").build();
+        }
+
         tag.persist();
 
         if (tag.isPersistent()) {
-            return Response.created(URI.create("/api/tags/" + tag.id)).build();
+            return Response.created(URI.create("/api/tags/" + tag.id)).entity(tag).build();
         }
 
-        return Response.status(Response.Status.BAD_REQUEST).entity(tag).build();
+        return Response.status(Response.Status.BAD_REQUEST).build();
     }
 
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTagById(@PathParam("id") UUID id) {
+        if (id == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be null").build();
+        } else if (id.toString().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be empty").build();
+        }
+
         Tag tag = Tag.findById(id);
 
         if (tag == null) {
@@ -50,7 +62,14 @@ public class TagEndpoints {
     @Transactional
     @Path("/{id}")
     public Response deleteTag(@PathParam("id") UUID id) {
+        if (id == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be null").build();
+        } else if (id.toString().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be empty").build();
+        }
+
         Tag tag = Tag.findById(id);
+
         if (tag == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
@@ -64,7 +83,18 @@ public class TagEndpoints {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateTag(@PathParam("id") UUID id, Tag tag) {
+        if (id == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be null").build();
+        } else if (id.toString().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be empty").build();
+        } else if (tag == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Tag cannot be null").build();
+        } else if (tag.title == null || tag.title.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Title cannot be null or empty").build();
+        }
+
         Tag tagToUpdate = Tag.findById(id);
+
         if (tagToUpdate == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
