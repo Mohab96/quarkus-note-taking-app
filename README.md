@@ -33,6 +33,17 @@ To get started, follow these steps:
    this [Postman workspace](https://www.postman.com/science-engineer-87747892/workspace/quarkusnotetakingapi) to
    interact with the API directly from Postman.
 
+## Database Schema
+
+- The database schema consists of two tables `notes` and `tags`.
+- The `notes` table has the following columns:
+    - `id`: UUID (Primary Key)
+    - `title`: String
+    - `body`: String
+- The `tags` table has the following columns:
+    - `id`: UUID (Primary Key)
+    - `name`: String
+
 ## Running the application in dev mode
 
 You can run your application in dev mode that enables live coding using:
