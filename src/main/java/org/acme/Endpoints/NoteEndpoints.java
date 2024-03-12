@@ -105,9 +105,10 @@ public class NoteEndpoints {
 
     @PUT
     @Path("/{id}")
+    @Transactional
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateNote(@PathParam("id") UUID id, Note note) {
+    public Response updateNote(@PathParam("id") UUID id, Note newNote) {
         if (id == null) {
             return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be null").build();
         }
@@ -116,8 +117,7 @@ public class NoteEndpoints {
 //            return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be empty").build();
 //        }
 
-        Set<ConstraintViolation<Note>> noteViolations = validator.validate(note);
-
+        Set<ConstraintViolation<Note>> noteViolations = validator.validate(newNote);
         // this line of code is converting a Set of ConstraintViolation<Note> objects into a Set of ConstraintViolation<?> objects
         Set<ConstraintViolation<?>> violations = new HashSet<>(noteViolations);
 
@@ -128,22 +128,22 @@ public class NoteEndpoints {
                     .build();
         }
 
-        Note noteToUpdate = Note.findById(id);
+        Note oldNote = Note.findById(id);
 
-        if (noteToUpdate == null) {
+        if (oldNote == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        if (note.title != null && !note.title.isEmpty())
-            noteToUpdate.title = note.title;
+        if (newNote.title != null && !newNote.title.isEmpty())
+            oldNote.title = newNote.title;
 
-        if (note.body != null && !note.body.isEmpty())
-            noteToUpdate.body = note.body;
+        if (newNote.body != null && !newNote.body.isEmpty())
+            oldNote.body = newNote.body;
 
-        noteToUpdate.persist();
+        oldNote.persist();
 
-        if (noteToUpdate.isPersistent())
-            return Response.ok(noteToUpdate).build();
+        if (oldNote.isPersistent())
+            return Response.ok(oldNote).build();
 
         return Response.status(Response.Status.BAD_REQUEST).build();
     }
@@ -170,6 +170,7 @@ public class NoteEndpoints {
 
     @POST
     @Path("/{id}/tags/{tagId}")
+    @Transactional
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addTag(@PathParam("id") UUID id, @PathParam("tagId") UUID tagId) {
@@ -191,7 +192,7 @@ public class NoteEndpoints {
         note.tagsList.add(tag);
         note.persist();
 
-        if (note.isPersistent() && tag.isPersistent()) {
+        if (note.isPersistent()) {
             return Response.created(URI.create("/api/notes/" + note.id + "/tags/" + tag.id)).entity(note).build();
         }
 

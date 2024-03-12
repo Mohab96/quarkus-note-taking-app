@@ -104,12 +104,13 @@ public class TagEndpoints {
 
     @PUT
     @Path("/{id}")
+    @Transactional
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateTag(@PathParam("id") UUID id, Tag tag) {
+    public Response updateTag(@PathParam("id") UUID id, Tag newTag) {
         if (id == null) {
             return Response.status(Response.Status.BAD_REQUEST).entity("ID cannot be null").build();
-        } else if (tag == null) {
+        } else if (newTag == null) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Tag cannot be null").build();
         }
 
@@ -120,7 +121,7 @@ public class TagEndpoints {
 //            return Response.status(Response.Status.BAD_REQUEST).entity("Title cannot be null or empty").build();
 //        }
 
-        Set<ConstraintViolation<Tag>> noteViolations = validator.validate(tag);
+        Set<ConstraintViolation<Tag>> noteViolations = validator.validate(newTag);
 
         // this line of code is converting a Set of ConstraintViolation<Note> objects into a Set of ConstraintViolation<?> objects
         Set<ConstraintViolation<?>> violations = new HashSet<>(noteViolations);
@@ -132,15 +133,20 @@ public class TagEndpoints {
                     .build();
         }
 
-        Tag tagToUpdate = Tag.findById(id);
+        Tag oldTag = Tag.findById(id);
 
-        if (tagToUpdate == null) {
+        if (oldTag == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        tagToUpdate.title = tag.title;
-        tagToUpdate.persist();
+        if (newTag.title != null && !newTag.title.isEmpty())
+            oldTag.title = newTag.title;
 
-        return Response.ok(tagToUpdate).build();
+        oldTag.persist();
+
+        if (oldTag.isPersistent())
+            return Response.ok(oldTag).build();
+
+        return Response.status(Response.Status.BAD_REQUEST).build();
     }
 }
